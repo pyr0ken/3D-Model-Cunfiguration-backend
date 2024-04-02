@@ -1,0 +1,12 @@
+venv/
+media/
+migrations/
+.idea/
+__pycache__/
+secrets/
+celerybeat-schedule
+*.log
+*.pot
+*.pyc
+db.sqlite3
+media
