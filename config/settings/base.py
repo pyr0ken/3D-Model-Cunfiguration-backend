@@ -42,14 +42,18 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Third-party apps
+    "channels",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "drf_yasg",
+    "silk",
     # local apps
+    "apps.websocket",
     "apps.core",
     "apps.users",
     "apps.models",
+    "apps.rooms",
     "apps.dashboard",
 ]
 
@@ -86,7 +90,20 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "config.wsgi.application"
+# WSGI_APPLICATION = "config.wsgi.application"
+
+# ------------------------ Chnnels ------------------------
+ASGI_APPLICATION = "config.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
+
 
 # ------------------------ Database ------------------------
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -125,7 +142,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Tehran"
 
 USE_I18N = False
 
@@ -134,7 +151,7 @@ USE_TZ = True
 # ------------------------ Static files (CSS, JavaScript, Images) ------------------------
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
@@ -163,9 +180,10 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    #! TODO: CHANGE REFRESH TOKEN LIFETIME
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
     "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
+    "BLACKLIST_AFTER_ROTATION": False,
     "UPDATE_LAST_LOGIN": False,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
@@ -192,6 +210,8 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://localhost:3000",
+    "https://127.0.0.1:3000",
 ]
 
 # ------------------------ Email Config ------------------------
@@ -244,3 +264,10 @@ CACHES = {
 # CELERY_TASK_EAGER_PROPAGATES = True
 # CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # CELERY_TIMEZONE = "UTC"
+
+
+# ------------------------ Video SDK Config ------------------------
+VIDEOSDK_API_KEY = config('VIDEOSDK_API_KEY')
+VIDEOSDK_SECRET_KEY = config('VIDEOSDK_SECRET_KEY')
+VIDEOSDK_API_ENDPOINT = config('VIDEOSDK_API_ENDPOINT')
+

@@ -42,7 +42,7 @@ class UserAdmin(BaseUserAdmin):
             {
                 "classes": ["wide"],
                 "fields": [
-                    "email",
+                    "username",
                     "password1",
                     "password2",
                 ],

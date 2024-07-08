@@ -8,15 +8,18 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token["username"] = user.username
+        token["user_id"] = str(user.id)
         # token['email'] = user.email
         return token
-
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("username",)
+        fields = (
+            "id",
+            "username",
+        )
 
 
 class UserRegSerializer(serializers.Serializer):

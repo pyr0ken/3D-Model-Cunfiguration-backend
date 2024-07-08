@@ -10,6 +10,7 @@ admin.site.site_header = "3D Model Configuration"
 api_urlpatterns = [
     path("users/", include("apps.users.urls", namespace="users")),
     path("models/", include("apps.models.urls", namespace="models")),
+    path("rooms/", include("apps.rooms.urls", namespace="rooms")),
     path("dashboard/", include("apps.dashboard.urls", namespace="dashboard")),
 ]
 
