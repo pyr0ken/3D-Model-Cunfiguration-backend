@@ -92,6 +92,7 @@ class RoomMembersSerializer(serializers.ModelSerializer):
 class InputRoomModelSerializer(serializers.Serializer):
     meeting_id = serializers.CharField(required=True)
     model_id = serializers.UUIDField(required=True)
+    edit_model_id = serializers.UUIDField(required=False)
 
 
 class OutputRoomModelSerializer(serializers.ModelSerializer):
@@ -100,7 +101,8 @@ class OutputRoomModelSerializer(serializers.ModelSerializer):
     title = serializers.CharField(source='edit_model.model.title')
     display_name = serializers.CharField(source='edit_model.display_name')
     file = serializers.FileField(source='edit_model.model.file')
-    created_at = serializers.DateTimeField(source='edit_model.model.created_at')
+    created_at = serializers.DateTimeField(
+        source='edit_model.model.created_at')
 
     class Meta:
         model = RoomModel
@@ -114,5 +116,9 @@ class OutputRoomModelSerializer(serializers.ModelSerializer):
         )
 
 
-class RoomSelectModelSerializer(InputRoomModelSerializer):
+class RoomSelectModelSerializer(serializers.Serializer):
+    meeting_id = serializers.CharField(required=True)
+    edit_model_id = serializers.UUIDField(required=True)
+
+class RoomModelDeleteSerializer(RoomSelectModelSerializer):
     ...

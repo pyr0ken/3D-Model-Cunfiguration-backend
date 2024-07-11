@@ -3,9 +3,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-
 from apps.models.models import EditModel, Model
-from apps.models.serializers import ModelDetailSerializer
 from .serializers import (
     InputRoomCreateSerializer,
     OutputRoomModelSerializer,
@@ -15,15 +13,14 @@ from .serializers import (
     RoomJoinInputSerializer,
     RoomListSerializer,
     RoomMemberLeftSerializer,
-    RoomMembersSerializer,
     RoomMemberListSerializer,
+    RoomModelDeleteSerializer,
     RoomSelectModelSerializer,
     VideoSDKCreateRoomSerializer,
     InputRoomModelSerializer,
 )
 from .models import Room, RoomMember, RoomModel
 from .viideoSDK import generate_token, create_room
-from apps.users.models import User
 
 
 class VideoSDKCreateRoomApi(APIView):
@@ -54,6 +51,7 @@ class VideoSDKCreateRoomApi(APIView):
 
             result = {
                 "auth_token": auth_token,
+                "room_title": room.title,
                 "meeting_id": room.meeting_id
             }
 
@@ -110,32 +108,6 @@ class RoomApi(APIView):
             return Response(
                 {"detail": "The room deleted successfully."}, status=status.HTTP_200_OK
             )
-
-
-class RoomMemberApi(APIView):
-    permission_classes = (IsAuthenticated,)
-
-    def get(self, request, room_id):
-        room = Room.objects.filter(meeting_id=room_id).first()
-
-        if room:
-            members = RoomMember.objects.filter(room_id=room.id)
-
-            # room_serializer = RoomDetailSerializer(room)
-            members_serializer = RoomMembersSerializer(members, many=True)
-
-            # result = {
-            #     "room_detail": room_serializer.data,
-            #     "room_members": members_serializer.data
-            # }
-
-            return Response(members_serializer.data, status=status.HTTP_200_OK)
-
-        return Response(
-            {"detail": "The room id is not found."}, status=status.HTTP_404_NOT_FOUND
-        )
-
-    def post(self, request, *args, **kwargs): ...
 
 
 class RoomDetailApi(APIView):
@@ -233,7 +205,8 @@ class RoomJoinApi(APIView):
             result = {
                 "auth_token": auth_token,
                 "meeting_id": room.meeting_id,
-                "id": room.id,
+                "room_title": room.title,
+                "room_id": room.id,
             }
 
             return Response(result, status=status.HTTP_200_OK)
@@ -272,14 +245,38 @@ class RoomSelectModelApi(APIView):
         serializer = RoomSelectModelSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             meeting_id = serializer.validated_data['meeting_id']
-            model_id = serializer.validated_data['model_id']
+            edit_model_id = serializer.validated_data['edit_model_id']
 
-            room_model = RoomModel.objects.filter(
+            # False is select of all previous models
+            RoomModel.objects.filter(
                 room__meeting_id=meeting_id,
-                edit_model__model_id=model_id,
+            ).update(is_select=False)
+
+            # True is select of new selected model
+            RoomModel.objects.filter(
+                room__meeting_id=meeting_id,
+                edit_model_id=edit_model_id,
             ).update(is_select=True)
 
             return Response({"detail": "The Model selected successfully"}, status=status.HTTP_200_OK)
+
+
+class RoomModelDeleteApi(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        serializer = RoomModelDeleteSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            meeting_id = serializer.validated_data['meeting_id']
+            edit_model_id = serializer.validated_data['edit_model_id']
+
+            # False is select of all previous models
+            RoomModel.objects.filter(
+                room__meeting_id=meeting_id,
+                edit_model_id=edit_model_id,
+            ).delete()
+
+            return Response({"detail": "The Model deleted successfully"}, status=status.HTTP_200_OK)
 
 
 class RoomModelAddApi(APIView):
@@ -291,34 +288,53 @@ class RoomModelAddApi(APIView):
         if input_serializer.is_valid(raise_exception=True):
             meeting_id = input_serializer.validated_data['meeting_id']
             model_id = input_serializer.validated_data['model_id']
+            edit_model_id = input_serializer.validated_data.get(
+                'edit_model_id')
 
-            # get model and room
+            # get room
             room = Room.objects.filter(meeting_id=meeting_id).first()
-            model = Model.objects.filter(id=model_id).first()
 
-            # check display name
-            edit_models_count = EditModel.objects.filter(
-                model_id=model_id).count()
-            display_name = model.title
+            # check edit model is exist
+            edit_model = None
+            if edit_model_id:
+                edit_model = EditModel.objects.filter(id=edit_model_id).first()
 
-            # if model is exits change display name
-            if edit_models_count >= 1:
-                display_name = f'{display_name} ({edit_models_count})'
+            # check edit model is not exist create ones
+            if not edit_model:
+                # get model
+                model = Model.objects.filter(id=model_id).first()
 
-            # create new edit modelw
-            edit_model = EditModel.objects.create(
-                user_id=request.user.id,
-                model_id=model_id,
-                display_name=display_name,
-            )
+                # check display name
+                edit_models_count = EditModel.objects.filter(
+                    model_id=model_id).count()
+                display_name = model.title
+
+                # if model is exits change display name
+                if edit_models_count >= 0:
+                    display_name = f'{display_name} ({edit_models_count + 1})'
+
+                # create new edit modelw
+                edit_model = EditModel.objects.create(
+                    user_id=request.user.id,
+                    model_id=model_id,
+                    display_name=display_name,
+                    last_edit=timezone.now()
+                )
 
             # False all room model selected
             RoomModel.objects.filter(
                 room_id=room.id,
             ).update(is_select=False)
 
+            # Check room model is exist and select it
+            room_model = RoomModel.objects.filter(
+                room_id=room.id, edit_model_id=edit_model.id,)
+            if room_model:
+                room_model.update(is_select=True)
+                return Response({"detail": "New Edit model Opened."}, status=status.HTTP_201_CREATED)
+
             # create new room model
-            room_model = RoomModel.objects.create(
+            RoomModel.objects.create(
                 room_id=room.id,
                 edit_model_id=edit_model.id,
                 is_select=True,

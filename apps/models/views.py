@@ -1,4 +1,5 @@
 from django.db.models import Q
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -15,12 +16,10 @@ from .serializers import (
     ModelUploadedSerializer,
     ModelDeleteInputSerializer,
     EditModelInputSerializer,
-    EditModelOutputSerializer,
     NoteDeleteSerializer,
     PointInputSerializer,
     PointOutputSerializer,
     PointDeleteSerializer,
-    PointImageSerializer,
     PointNoteSerializer
 )
 
@@ -112,26 +111,38 @@ class EditModelApi(APIView):
     def post(self, request, *args, **kwargs):
         input_serializer = EditModelInputSerializer(data=request.data)
         if input_serializer.is_valid(raise_exception=True):
-            id = input_serializer.validated_data.get("id")
+            model_id = input_serializer.validated_data['model_id']
+            edit_model_id = input_serializer.validated_data.get(
+                'edit_model_id')
 
-            # get model
-            model = Model.objects.filter(id=id).first()
+            # check edit model is exist
+            edit_model = None
+            if edit_model_id:
+                edit_model = EditModel.objects.filter(id=edit_model_id).first()
 
-            # check display name
-            edit_models_count = EditModel.objects.filter(model_id=id).count()
+            # check edit model is not exist create ones
+            if not edit_model:
+                # get model and room
+                model = Model.objects.filter(id=model_id).first()
 
-            display_name = model.title
+                # check display name
+                edit_models_count = EditModel.objects.filter(
+                    model_id=model_id).count()
+                display_name = model.title
 
-            if edit_models_count >= 1:
-                display_name = f'{display_name} ({edit_models_count})'
+                # if model is exits change display name
+                if edit_models_count >= 0:
+                    display_name = f'{display_name} ({edit_models_count + 1})'
 
-            edit_model = EditModel.objects.create(
-                user_id=request.user.id,
-                model_id=id,
-                display_name=display_name,
-            )
+                # create new edit modelw
+                edit_model = EditModel.objects.create(
+                    user_id=request.user.id,
+                    model_id=model_id,
+                    display_name=display_name,
+                    last_edit=timezone.now()
+                )
 
-            output_serializer = EditModelOutputSerializer(edit_model.model)
+            output_serializer = EditModelDetailSerializer(edit_model)
 
             return Response(output_serializer.data, status=status.HTTP_201_CREATED)
         return Response(input_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -142,6 +153,7 @@ class EditModelDetailApi(APIView):
         edit_model = EditModel.objects.filter(id=edit_model_id).first()
         serializer = EditModelDetailSerializer(edit_model)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class EditModelDeleteApi(APIView):
     permission_classes = (IsAuthenticated, )
@@ -170,12 +182,18 @@ class PointAddApi(APIView):
     def post(self, request):
         input_serializer = PointInputSerializer(data=request.data)
         if input_serializer.is_valid(raise_exception=True):
-            edit_model_id = input_serializer.validated_data.get("edit_model_id")
+            edit_model_id = input_serializer.validated_data.get(
+                "edit_model_id")
             position = input_serializer.validated_data.get("position")
             color = input_serializer.validated_data.get("color")
             radius = input_serializer.validated_data.get("radius")
 
-            point = Point.objects.update_or_create(
+            # Update last edit time
+            EditModel.objects.filter(
+                id=edit_model_id).update(last_edit=timezone.now())
+
+            # Create New Point
+            point = Point.objects.create(
                 edit_model_id=edit_model_id,
                 position=position,
                 color=color,
@@ -192,7 +210,14 @@ class PointDeleteApi(APIView):
     def delete(self, request, *args, **kwargs):
         input_serializer = PointDeleteSerializer(data=request.data)
         if input_serializer.is_valid(raise_exception=True):
+            edit_model_id = input_serializer.validated_data.get(
+                'edit_model_id')
             point_id = input_serializer.validated_data.get("point_id")
+
+            # Update last edit time
+            EditModel.objects.filter(
+                id=edit_model_id).update(last_edit=timezone.now())
+
             point = Point.objects.filter(
                 id=point_id,
             )
@@ -208,12 +233,18 @@ class NoteAddApi(APIView):
     def post(self, request, *args, **kwargs):
         input_serializer = PointNoteSerializer(data=request.data)
         if input_serializer.is_valid(raise_exception=True):
+            edit_model_id = input_serializer.validated_data.get(
+                'edit_model_id')
             point_id = input_serializer.validated_data.get("point_id")
             note = input_serializer.validated_data.get("note")
 
+            # Update last edit time
+            EditModel.objects.filter(
+                id=edit_model_id).update(last_edit=timezone.now())
+
             point = Point.objects.filter(id=point_id).first()
             point.note = note
-            point.save(['note', 'updated_at'])
+            point.save()
 
             return Response(
                 {"detail": "Note added successfully."}, status=status.HTTP_201_CREATED
@@ -225,7 +256,14 @@ class NoteDeleteApi(APIView):
     def delete(self, request, *args, **kwargs):
         input_serializer = NoteDeleteSerializer(data=request.data)
         if input_serializer.is_valid(raise_exception=True):
+            edit_model_id = input_serializer.validated_data.get(
+                'edit_model_id')
             point_id = input_serializer.validated_data.get("point_id")
+
+            # Update last edit time
+            EditModel.objects.filter(
+                id=edit_model_id).update(last_edit=timezone.now())
+
             point = Point.objects.filter(
                 id=point_id,
             ).first()

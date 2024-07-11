@@ -1,4 +1,3 @@
-from tkinter import E
 from django.core.validators import FileExtensionValidator
 from rest_framework import serializers
 from .models import Model, EditModel, Point
@@ -29,6 +28,8 @@ class EditModelListSerializer(serializers.ModelSerializer):
     size = serializers.SerializerMethodField()
     format = serializers.SerializerMethodField()
     model_id = serializers.UUIDField(source="model.id")
+    points_count = serializers.SerializerMethodField()
+    notes_count = serializers.SerializerMethodField()
 
     class Meta:
         model = EditModel
@@ -38,9 +39,12 @@ class EditModelListSerializer(serializers.ModelSerializer):
             "file",
             "model_id",
             "display_name",
+            "last_edit",
             "size",
             "format",
-            "created_at"
+            "created_at",
+            "points_count",
+            "notes_count",
         )
 
     def get_size(self, obj):
@@ -48,6 +52,12 @@ class EditModelListSerializer(serializers.ModelSerializer):
 
     def get_format(self, obj):
         return obj.model.file.name.split(".")[-1]
+
+    def get_points_count(self, obj):
+        return Point.objects.filter(edit_model_id=obj.id).count()
+
+    def get_notes_count(self, obj):
+        return Point.objects.filter(edit_model_id=obj.id).exclude(note=None).count()
 
 
 class ModelUploadSerializer(serializers.Serializer):
@@ -93,21 +103,13 @@ class ModelDeleteInputSerializer(serializers.Serializer):
 
 
 class EditModelInputSerializer(serializers.Serializer):
-    id = serializers.UUIDField(required=True)
+    model_id = serializers.UUIDField(required=True)
+    edit_model_id = serializers.UUIDField(required=False)
+
 
 
 class EditModelDeleteInputSerializer(serializers.Serializer):
     edit_model_id = serializers.UUIDField(required=True)
-
-
-class EditModelOutputSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Model
-        fields = (
-            "id",
-            "title",
-            "file",
-        )
 
 
 class EditModelDetailSerializer(serializers.ModelSerializer):
@@ -124,6 +126,7 @@ class EditModelDetailSerializer(serializers.ModelSerializer):
             "title",
             "file",
             "display_name",
+            "last_edit",
             "model_id",
             "created_at"
         )
@@ -135,18 +138,12 @@ class PointInputSerializer(serializers.Serializer):
     color = serializers.CharField(required=True)
     radius = serializers.CharField(required=True)
     note = serializers.CharField(required=False)
-    image = serializers.CharField(required=False)
 
 
 class PointNoteSerializer(serializers.Serializer):
+    edit_model_id = serializers.UUIDField(required=True)
     point_id = serializers.UUIDField(required=True)
     note = serializers.CharField(required=True)
-
-
-class PointImageSerializer(serializers.Serializer):
-    point_id = serializers.UUIDField(required=True)
-    image = serializers.ImageField(required=True)
-
 
 class PointOutputSerializer(serializers.ModelSerializer):
     class Meta:
@@ -157,13 +154,14 @@ class PointOutputSerializer(serializers.ModelSerializer):
             "color",
             "radius",
             "note",
-            "image",
         )
 
 
 class PointDeleteSerializer(serializers.Serializer):
+    edit_model_id = serializers.UUIDField(required=True)
     point_id = serializers.UUIDField(required=True)
 
 
 class NoteDeleteSerializer(serializers.Serializer):
+    edit_model_id = serializers.UUIDField(required=True)
     point_id = serializers.UUIDField(required=True)

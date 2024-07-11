@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.db import models
-from django.contrib.postgres.fields import ArrayField
 from django.core.validators import FileExtensionValidator
 from apps.core.models import BaseModel
 from .constants import ModelStatusType
@@ -43,6 +42,7 @@ class EditModel(BaseModel):
         Model, on_delete=models.CASCADE, related_name="user_models"
     )
     display_name = models.CharField(max_length=255)
+    last_edit = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Edit Model"
@@ -55,12 +55,11 @@ class EditModel(BaseModel):
 
 class Point(BaseModel):
     edit_model = models.ForeignKey(
-        EditModel, on_delete=models.CASCADE, related_name="points")
+        EditModel, on_delete=models.CASCADE, related_name="edit_model_points")
     position = models.CharField()
     color = models.CharField()
     radius = models.FloatField()
     note = models.TextField(null=True, blank=True)
-    image = models.ImageField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Point"

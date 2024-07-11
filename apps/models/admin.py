@@ -76,8 +76,8 @@ class EditModelAdmin(admin.ModelAdmin):
 
 @admin.register(Point)
 class PointAdmin(admin.ModelAdmin):
-    list_display = ("id", "model", "note", "position",
-                    "color", "image", "created_at")
+    list_display = ("id", "edit_model", "note", "position",
+                    "color", "created_at")
     list_filter = ("created_at", "updated_at")
     list_per_page = 50
 

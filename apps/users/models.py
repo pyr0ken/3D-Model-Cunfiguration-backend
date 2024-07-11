@@ -1,14 +1,13 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.tokens import RefreshToken
 from .manager import UserManager
 
 
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     username = models.CharField(unique=True)
-    # email = models.EmailField(unique=True)
 
     objects = UserManager()
 
@@ -30,8 +29,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self) -> str:
         return f"{self.username}"
 
-    def get_token(self):
-        return Token.objects.get_or_create(user=self)
+    def get_tokens(self):
+        refresh = RefreshToken.for_user(self)
+        return refresh, refresh.access_token
 
     def delete_token(self):
         return self.auth_token.delete()
