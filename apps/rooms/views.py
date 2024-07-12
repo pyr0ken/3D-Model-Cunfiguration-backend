@@ -1,10 +1,12 @@
 from django.utils import timezone
+from django.db.models import Count
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from apps.models.models import EditModel, Model
 from .serializers import (
+    EnterRoomSerializer,
     InputRoomCreateSerializer,
     OutputRoomModelSerializer,
     RoomDeleteInputSerializer,
@@ -16,20 +18,71 @@ from .serializers import (
     RoomMemberListSerializer,
     RoomModelDeleteSerializer,
     RoomSelectModelSerializer,
-    VideoSDKCreateRoomSerializer,
     InputRoomModelSerializer,
 )
 from .models import Room, RoomMember, RoomModel
 from .viideoSDK import generate_token, create_room
 
 
-class VideoSDKCreateRoomApi(APIView):
-    def post(self, request):
-        serializer = VideoSDKCreateRoomSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            id = serializer.validated_data['id']
+class RoomApi(APIView):
+    permission_classes = [IsAuthenticated]
 
-            room = Room.objects.filter(id=id).first()
+    def get(self, request, *args, **kwargs):
+        created_rooms = Room.objects.filter(owner_id=request.user.id).annotate(
+            members_count=Count('user_rooms'), edit_models_count=Count("room_models"))
+        joined_rooms = RoomMember.objects.filter(user_id=request.user.id).exclude(
+            room__owner_id=request.user.id
+        )
+
+        created_rooms_serializer = RoomListSerializer(created_rooms, many=True)
+        joined_rooms_serializer = RoomMemberListSerializer(
+            joined_rooms, many=True)
+
+        result = {
+            "created_rooms": created_rooms_serializer.data,
+            "joined_rooms": joined_rooms_serializer.data,
+        }
+
+        return Response(result, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        serializer = InputRoomCreateSerializer(data=request.data)
+
+        if serializer.is_valid(raise_exception=True):
+            title = serializer.validated_data['title']
+
+            # create new room
+            Room.objects.create(
+                title=title,
+                owner_id=request.user.id
+            )
+
+            return Response(
+                {"detail": "جلسه با موفقیت ساخته شد."}, status=status.HTTP_201_CREATED
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        serializer = RoomDeleteInputSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            room_id = serializer.validated_data.get("room_id")
+
+            room = Room.objects.filter(id=room_id).first()
+            room.delete()
+
+            return Response(
+                {"detail": "جلسه مورد نظر با موفقیت حذف شد."}, status=status.HTTP_200_OK
+            )
+
+
+class EnterRoomApi(APIView):
+    def post(self, request):
+        serializer = EnterRoomSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            room_id = serializer.validated_data['room_id']
+
+            room = Room.objects.filter(id=room_id).first()
             room.is_active = True
             room.save(update_fields=['is_active'])
 
@@ -58,56 +111,6 @@ class VideoSDKCreateRoomApi(APIView):
             return Response(result, status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class RoomApi(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        created_rooms = Room.objects.filter(owner_id=request.user.id)
-        joined_rooms = RoomMember.objects.filter(user_id=request.user.id).exclude(
-            room__owner_id=request.user.id
-        )
-
-        created_rooms_serializer = RoomListSerializer(created_rooms, many=True)
-        joined_rooms_serializer = RoomMemberListSerializer(
-            joined_rooms, many=True)
-
-        result = {
-            "created_rooms": created_rooms_serializer.data,
-            "joined_rooms": joined_rooms_serializer.data,
-        }
-
-        return Response(result, status=status.HTTP_200_OK)
-
-    def post(self, request, *args, **kwargs):
-        serializer = InputRoomCreateSerializer(data=request.data)
-
-        if serializer.is_valid(raise_exception=True):
-            title = serializer.validated_data['title']
-
-            new_room = Room.objects.create(
-                title=title,
-                owner_id=request.user.id
-            )
-
-            return Response(
-                {"detail": "The room created successfully."}, status=status.HTTP_201_CREATED
-            )
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, *args, **kwargs):
-        serializer = RoomDeleteInputSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            id = serializer.validated_data.get("id")
-
-            room = Room.objects.filter(id=id).first()
-            room.delete()
-
-            return Response(
-                {"detail": "The room deleted successfully."}, status=status.HTTP_200_OK
-            )
 
 
 class RoomDetailApi(APIView):
@@ -191,10 +194,10 @@ class RoomJoinApi(APIView):
             member.save(update_fields=['is_leave'])
 
             if not room:
-                return Response({'detail': "Room is not not found"}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'detail': "جلسه مورد نظر پیدا نشد."}, status=status.HTTP_404_NOT_FOUND)
 
             if not room.is_active:
-                return Response({"detail": "Room is ended"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"detail": "جلسه به اتمام رسیده است."}, status=status.HTTP_400_BAD_REQUEST)
 
             is_owner = False
             if room.owner_id == request.user.id:
@@ -270,13 +273,12 @@ class RoomModelDeleteApi(APIView):
             meeting_id = serializer.validated_data['meeting_id']
             edit_model_id = serializer.validated_data['edit_model_id']
 
-            # False is select of all previous models
             RoomModel.objects.filter(
                 room__meeting_id=meeting_id,
                 edit_model_id=edit_model_id,
             ).delete()
 
-            return Response({"detail": "The Model deleted successfully"}, status=status.HTTP_200_OK)
+            return Response({"detail": "مدل با موفقیت از جلسه حذف شد."}, status=status.HTTP_200_OK)
 
 
 class RoomModelAddApi(APIView):

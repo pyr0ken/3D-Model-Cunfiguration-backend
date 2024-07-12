@@ -1,33 +1,18 @@
 from rest_framework import serializers
 from apps.rooms.models import Room, RoomMember, RoomModel
 from apps.users.serializers import UserSerializer
-from apps.models.serializers import ModelDetailSerializer
 
 
-class VideoSDKCreateRoomSerializer(serializers.Serializer):
-    id = serializers.UUIDField(required=True)
+class EnterRoomSerializer(serializers.Serializer):
+    room_id = serializers.UUIDField(required=True)
 
 
 class InputRoomCreateSerializer(serializers.Serializer):
     title = serializers.CharField(required=True)
 
 
-class RoomBaseSerializer(serializers.ModelSerializer):
-    created_at = serializers.DateTimeField()
-
-    class Meta:
-        model = Room
-        fields = (
-            "id",
-            "title",
-            "meeting_id",
-            "is_active",
-            "created_at",
-        )
-
-
 class RoomDeleteInputSerializer(serializers.Serializer):
-    id = serializers.CharField(required=True)
+    room_id = serializers.CharField(required=True)
 
 
 class RoomJoinInputSerializer(serializers.Serializer):
@@ -43,8 +28,21 @@ class RoomEndSerializer(serializers.Serializer):
     meeting_id = serializers.CharField(required=True)
 
 
-class RoomListSerializer(RoomBaseSerializer):
-    ...
+class RoomListSerializer(serializers.ModelSerializer):
+    members_count = serializers.IntegerField()
+    edit_models_count = serializers.IntegerField()
+
+    class Meta:
+        model = Room
+        fields = (
+            "id",
+            "title",
+            "meeting_id",
+            "is_active",
+            "members_count",
+            "edit_models_count",
+            "created_at",
+        )
 
 
 class RoomDetailSerializer(serializers.ModelSerializer):

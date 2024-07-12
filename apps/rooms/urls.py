@@ -11,8 +11,8 @@ urlpatterns = [
     path("left/", views.RoomMemberLeftApi.as_view(), name="room-member-left"),
     path("join/", views.RoomJoinApi.as_view(), name="room-member"),
     path("<str:room_id>/detail/", views.RoomDetailApi.as_view(), name="room-member"),
-    path('video-sdk/create/', views.VideoSDKCreateRoomApi.as_view(),
-         name='video-sdk-create-room'),
+    path('enter/', views.EnterRoomApi.as_view(),
+         name='room-enter'),
 
     # room model api
     path("models/select/", views.RoomSelectModelApi.as_view(),

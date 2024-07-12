@@ -25,8 +25,6 @@ class ModelDetailSerializer(ModelSerializer):
 class EditModelListSerializer(serializers.ModelSerializer):
     title = serializers.UUIDField(source='model.title')
     file = serializers.FileField(source='model.file')
-    size = serializers.SerializerMethodField()
-    format = serializers.SerializerMethodField()
     model_id = serializers.UUIDField(source="model.id")
     points_count = serializers.SerializerMethodField()
     notes_count = serializers.SerializerMethodField()
@@ -40,19 +38,11 @@ class EditModelListSerializer(serializers.ModelSerializer):
             "model_id",
             "display_name",
             "last_edit",
-            "size",
-            "format",
             "created_at",
             "points_count",
             "notes_count",
         )
-
-    def get_size(self, obj):
-        return obj.model.file.size
-
-    def get_format(self, obj):
-        return obj.model.file.name.split(".")[-1]
-
+        
     def get_points_count(self, obj):
         return Point.objects.filter(edit_model_id=obj.id).count()
 
@@ -69,7 +59,6 @@ class ModelUploadSerializer(serializers.Serializer):
                 [
                     "glb",
                     "gltf",
-                    "obj",
                 ]
             )
         ],
@@ -99,7 +88,7 @@ class ModelUploadedSerializer(serializers.ModelSerializer):
 
 
 class ModelDeleteInputSerializer(serializers.Serializer):
-    id = serializers.UUIDField(required=True)
+    model_id = serializers.UUIDField(required=True)
 
 
 class EditModelInputSerializer(serializers.Serializer):

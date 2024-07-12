@@ -32,7 +32,7 @@ class ModelListApi(APIView):
         uploaded_models = Model.objects.filter(
             Q(created_by_id=request.user.id) & Q(status=ModelStatusType.UPLOADED))
         edited_models = EditModel.objects.filter(
-            user_id=request.user.id).order_by("-created_at")
+            user_id=request.user.id).order_by("-last_edit")
 
         public_models_serializer = ModelListSerializer(
             public_models, many=True)
@@ -74,12 +74,13 @@ class ModelUploadApi(APIView):
             file = serializer.validated_data.get("file")
             title = serializer.validated_data.get("title")
 
-            new_model = Model.objects.create(
+            # create new model
+            Model.objects.create(
                 created_by_id=request.user.id, title=title, file=file, status=ModelStatusType.UPLOADED
             )
 
             return Response(
-                {"detail": "Model uploaded successfully."},
+                {"detail": "مدل شما با موفقیت آپلود شد."},
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -91,19 +92,19 @@ class ModelDeleteApi(APIView):
     def delete(self, request, *args, **kwargs):
         serializer = ModelDeleteInputSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            id = serializer.validated_data.get("id")
+            model_id = serializer.validated_data.get("model_id")
 
-            model = Model.objects.filter(id=id).first()
+            model = Model.objects.filter(id=model_id).first()
             model.delete()
 
             return Response(
-                {"detail": "The model deleted successfully."}, status=status.HTTP_200_OK
+                {"detail": "مدل مورد نظر با موفقیت حذف شد."}, status=status.HTTP_200_OK
             )
 
 
 class EditModelApi(APIView):
     def get(self, request):
-        edited_models = EditModel.objects.filter(user_id=request.user.id)
+        edited_models = EditModel.objects.filter(user_id=request.user.id).order_by("-last_edit")
         edited_models_serializer = EditModelListSerializer(
             edited_models, many=True)
         return Response(edited_models_serializer.data, status=status.HTTP_200_OK)
@@ -167,7 +168,7 @@ class EditModelDeleteApi(APIView):
             edit_model.delete()
 
             return Response(
-                {"detail": "The Edit model deleted successfully."}, status=status.HTTP_200_OK
+                {"detail": "مدل مورد نظر با موفقیت حذف شد"}, status=status.HTTP_200_OK
             )
 
 
@@ -193,7 +194,7 @@ class PointAddApi(APIView):
                 id=edit_model_id).update(last_edit=timezone.now())
 
             # Create New Point
-            point = Point.objects.create(
+            Point.objects.create(
                 edit_model_id=edit_model_id,
                 position=position,
                 color=color,
@@ -223,7 +224,7 @@ class PointDeleteApi(APIView):
             )
             point.delete()
             return Response(
-                {"detail": "Point deleted successfully."},
+                {"detail": "نقطه مورد نظر با موفقیت حذف شد."},
                 status=status.HTTP_201_CREATED,
             )
         return Response(input_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -247,7 +248,7 @@ class NoteAddApi(APIView):
             point.save()
 
             return Response(
-                {"detail": "Note added successfully."}, status=status.HTTP_201_CREATED
+                {"detail": "یادداشت با موفقیت ذخیره شد."}, status=status.HTTP_201_CREATED
             )
         return Response(input_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -271,6 +272,6 @@ class NoteDeleteApi(APIView):
             point.save()
 
             return Response(
-                {"detail": "Note deleted successfully."}, status=status.HTTP_201_CREATED
+                {"detail": "یادداشت مورد نظر با موفقیت حذف شد."}, status=status.HTTP_201_CREATED
             )
         return Response(input_serializer.errors, status=status.HTTP_400_BAD_REQUEST)

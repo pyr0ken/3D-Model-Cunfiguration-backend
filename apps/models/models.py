@@ -18,7 +18,6 @@ class Model(BaseModel):
                 [
                     "glb",
                     "gltf",
-                    "obj",
                 ]
             )
         ],
@@ -50,7 +49,7 @@ class EditModel(BaseModel):
         db_table = "edit_models"
 
     def __str__(self) -> str:
-        return f"{self.user} - {self.model}"
+        return f"{self.user} - {self.display_name}"
 
 
 class Point(BaseModel):
