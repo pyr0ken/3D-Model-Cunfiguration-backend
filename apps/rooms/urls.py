@@ -11,8 +11,7 @@ urlpatterns = [
     path("left/", views.RoomMemberLeftApi.as_view(), name="room-member-left"),
     path("join/", views.RoomJoinApi.as_view(), name="room-member"),
     path("<str:room_id>/detail/", views.RoomDetailApi.as_view(), name="room-member"),
-    path('enter/', views.EnterRoomApi.as_view(),
-         name='room-enter'),
+    path('enter/', views.RoomEnterApi.as_view(), name='room-enter'),
 
     # room model api
     path("models/select/", views.RoomSelectModelApi.as_view(),

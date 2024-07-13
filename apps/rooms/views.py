@@ -3,7 +3,7 @@ from django.db.models import Count
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from apps.core.mixins import AuthenticatedAccessMixin
 from apps.models.models import EditModel, Model
 from .serializers import (
     EnterRoomSerializer,
@@ -24,15 +24,13 @@ from .models import Room, RoomMember, RoomModel
 from .viideoSDK import generate_token, create_room
 
 
-class RoomApi(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
+class RoomApi(AuthenticatedAccessMixin, APIView):
+    def get(self, request):
         created_rooms = Room.objects.filter(owner_id=request.user.id).annotate(
-            members_count=Count('user_rooms'), edit_models_count=Count("room_models"))
+            members_count=Count('user_rooms'), edit_models_count=Count("room_models")).order_by("-created_at")
         joined_rooms = RoomMember.objects.filter(user_id=request.user.id).exclude(
             room__owner_id=request.user.id
-        )
+        ).order_by("-last_join")
 
         created_rooms_serializer = RoomListSerializer(created_rooms, many=True)
         joined_rooms_serializer = RoomMemberListSerializer(
@@ -45,7 +43,7 @@ class RoomApi(APIView):
 
         return Response(result, status=status.HTTP_200_OK)
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         serializer = InputRoomCreateSerializer(data=request.data)
 
         if serializer.is_valid(raise_exception=True):
@@ -63,7 +61,7 @@ class RoomApi(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request):
         serializer = RoomDeleteInputSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             room_id = serializer.validated_data.get("room_id")
@@ -76,7 +74,7 @@ class RoomApi(APIView):
             )
 
 
-class EnterRoomApi(APIView):
+class RoomEnterApi(AuthenticatedAccessMixin, APIView):
     def post(self, request):
         serializer = EnterRoomSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
@@ -113,9 +111,7 @@ class EnterRoomApi(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class RoomDetailApi(APIView):
-    permission_classes = (IsAuthenticated,)
-
+class RoomDetailApi(AuthenticatedAccessMixin, APIView):
     def get(self, request, room_id):
         room = Room.objects.filter(id=room_id).first()
 
@@ -128,9 +124,7 @@ class RoomDetailApi(APIView):
         )
 
 
-class RoomEndApi(APIView):
-    permission_classes = (IsAuthenticated,)
-
+class RoomEndApi(AuthenticatedAccessMixin, APIView):
     def post(self, request):
         serializer = RoomEndSerializer(data=request.data)
 
@@ -153,9 +147,7 @@ class RoomEndApi(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class RoomMemberLeftApi(APIView):
-    permission_classes = (IsAuthenticated,)
-
+class RoomMemberLeftApi(AuthenticatedAccessMixin, APIView):
     def post(self, request):
         serializer = RoomMemberLeftSerializer(data=request.data)
 
@@ -177,9 +169,7 @@ class RoomMemberLeftApi(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class RoomJoinApi(APIView):
-    permission_classes = (IsAuthenticated,)
-
+class RoomJoinApi(AuthenticatedAccessMixin, APIView):
     def post(self, request):
         serializer = RoomJoinInputSerializer(data=request.data)
 
@@ -217,9 +207,7 @@ class RoomJoinApi(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class RoomModelListApi(APIView):
-    permission_classes = (IsAuthenticated, )
-
+class RoomModelListApi(AuthenticatedAccessMixin, APIView):
     def get(self, request, meeting_id):
         room_models = RoomModel.objects.filter(room__meeting_id=meeting_id)
         serializer = OutputRoomModelSerializer(room_models, many=True)
@@ -241,9 +229,7 @@ class RoomModelListApi(APIView):
         return Response(result, status=status.HTTP_200_OK)
 
 
-class RoomSelectModelApi(APIView):
-    permission_classes = (IsAuthenticated,)
-
+class RoomSelectModelApi(AuthenticatedAccessMixin, APIView):
     def post(self, request):
         serializer = RoomSelectModelSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
@@ -264,9 +250,7 @@ class RoomSelectModelApi(APIView):
             return Response({"detail": "The Model selected successfully"}, status=status.HTTP_200_OK)
 
 
-class RoomModelDeleteApi(APIView):
-    permission_classes = (IsAuthenticated,)
-
+class RoomModelDeleteApi(AuthenticatedAccessMixin, APIView):
     def post(self, request):
         serializer = RoomModelDeleteSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
@@ -281,9 +265,7 @@ class RoomModelDeleteApi(APIView):
             return Response({"detail": "مدل با موفقیت از جلسه حذف شد."}, status=status.HTTP_200_OK)
 
 
-class RoomModelAddApi(APIView):
-    permission_classes = (IsAuthenticated, )
-
+class RoomModelAddApi(AuthenticatedAccessMixin, APIView):
     def post(self, request):
         input_serializer = InputRoomModelSerializer(data=request.data)
 

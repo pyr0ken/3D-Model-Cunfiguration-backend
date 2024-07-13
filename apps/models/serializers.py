@@ -3,7 +3,7 @@ from rest_framework import serializers
 from .models import Model, EditModel, Point
 
 
-class ModelSerializer(serializers.ModelSerializer):
+class ModelListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Model
         fields = (
@@ -12,14 +12,6 @@ class ModelSerializer(serializers.ModelSerializer):
             "file",
             "created_at",
         )
-
-
-class ModelListSerializer(ModelSerializer):
-    ...
-
-
-class ModelDetailSerializer(ModelSerializer):
-    ...
 
 
 class EditModelListSerializer(serializers.ModelSerializer):
@@ -42,7 +34,7 @@ class EditModelListSerializer(serializers.ModelSerializer):
             "points_count",
             "notes_count",
         )
-        
+
     def get_points_count(self, obj):
         return Point.objects.filter(edit_model_id=obj.id).count()
 
@@ -96,7 +88,6 @@ class EditModelInputSerializer(serializers.Serializer):
     edit_model_id = serializers.UUIDField(required=False)
 
 
-
 class EditModelDeleteInputSerializer(serializers.Serializer):
     edit_model_id = serializers.UUIDField(required=True)
 
@@ -105,8 +96,6 @@ class EditModelDetailSerializer(serializers.ModelSerializer):
     title = serializers.UUIDField(source='model.title')
     file = serializers.FileField(source='model.file')
     model_id = serializers.UUIDField(source="model.id")
-    # size = serializers.SerializerMethodField()
-    # format = serializers.SerializerMethodField()
 
     class Meta:
         model = EditModel
@@ -133,6 +122,7 @@ class PointNoteSerializer(serializers.Serializer):
     edit_model_id = serializers.UUIDField(required=True)
     point_id = serializers.UUIDField(required=True)
     note = serializers.CharField(required=True)
+
 
 class PointOutputSerializer(serializers.ModelSerializer):
     class Meta:

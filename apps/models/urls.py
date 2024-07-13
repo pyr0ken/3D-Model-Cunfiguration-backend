@@ -8,11 +8,9 @@ urlpatterns = [
     path("", views.ModelListApi.as_view(), name="model-list"),
     path("upload/", views.ModelUploadApi.as_view(), name="model-upload"),
     path("delete/", views.ModelDeleteApi.as_view(), name="model-delete"),
-    path("<uuid:id>/", views.ModelDetailApi.as_view(), name="model-detail"),
 
     # edit model api
     path("edit/", views.EditModelApi.as_view(), name="model-edit"),
-    path("edit/<uuid:edit_model_id>/", views.EditModelDetailApi.as_view(), name="model-edit-detail"),
     path("edit/delete/", views.EditModelDeleteApi.as_view(), name="model-edit-delete"),
 
 

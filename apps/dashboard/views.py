@@ -2,13 +2,14 @@ from django.db.models import Count
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
+from apps.core.mixins import AuthenticatedAccessMixin
 from apps.rooms.models import Room
 from apps.models.models import EditModel, Model, Point
 from apps.models.constants import ModelStatusType
 from .serializers import DashboardEditModelSerializer, RoomMemberDashboardSerializer
 
 
-class DashboardApi(APIView):
+class DashboardApi(AuthenticatedAccessMixin, APIView):
     def get(self, request):
         user_id = request.user.id
 
@@ -29,7 +30,7 @@ class DashboardApi(APIView):
         return Response(result, status=status.HTTP_200_OK)
 
 
-class DashboardRoomMemberApi(APIView):
+class DashboardRoomMemberApi(AuthenticatedAccessMixin, APIView):
     def get(self, request):
         rooms = Room.objects.filter(owner_id=request.user.id).annotate(
             members=Count('user_rooms'))
@@ -37,7 +38,7 @@ class DashboardRoomMemberApi(APIView):
         return Response(serializer.data)
 
 
-class DashboardEditModelApi(APIView):
+class DashboardEditModelApi(AuthenticatedAccessMixin, APIView):
     def get(self, request):
         edit_models = EditModel.objects.filter(
             user_id=request.user.id).annotate(points=Count('edit_model_points'))

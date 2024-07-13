@@ -3,7 +3,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from apps.core.mixins import AuthenticatedAccessMixin
 from .constants import ModelStatusType
 from .models import Model, EditModel, Point
 from .serializers import (
@@ -11,7 +11,6 @@ from .serializers import (
     EditModelDetailSerializer,
     ModelListSerializer,
     EditModelListSerializer,
-    ModelDetailSerializer,
     ModelUploadSerializer,
     ModelUploadedSerializer,
     ModelDeleteInputSerializer,
@@ -24,9 +23,7 @@ from .serializers import (
 )
 
 
-class ModelListApi(APIView):
-    permission_classes = (IsAuthenticated,)
-
+class ModelListApi(AuthenticatedAccessMixin, APIView):
     def get(self, request):
         public_models = Model.objects.filter(status=ModelStatusType.PUBLIC)
         uploaded_models = Model.objects.filter(
@@ -50,18 +47,7 @@ class ModelListApi(APIView):
         return Response(result, status=status.HTTP_200_OK)
 
 
-class ModelDetailApi(APIView):
-    permission_classes = (IsAuthenticated,)
-
-    def get(self, request, id):
-        model = Model.objects.filter(id=id).first()
-        serializer = ModelDetailSerializer(model)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class ModelUploadApi(APIView):
-    permission_classes = (IsAuthenticated,)
-
+class ModelUploadApi(AuthenticatedAccessMixin, APIView):
     def get(self, request):
         uploaded_models = Model.objects.filter(
             Q(created_by_id=request.user.id) & Q(status=ModelStatusType.UPLOADED))
@@ -86,9 +72,7 @@ class ModelUploadApi(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ModelDeleteApi(APIView):
-    permission_classes = (IsAuthenticated,)
-
+class ModelDeleteApi(AuthenticatedAccessMixin, APIView):
     def delete(self, request, *args, **kwargs):
         serializer = ModelDeleteInputSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
@@ -102,7 +86,7 @@ class ModelDeleteApi(APIView):
             )
 
 
-class EditModelApi(APIView):
+class EditModelApi(AuthenticatedAccessMixin, APIView):
     def get(self, request):
         edited_models = EditModel.objects.filter(user_id=request.user.id).order_by("-last_edit")
         edited_models_serializer = EditModelListSerializer(
@@ -148,18 +132,8 @@ class EditModelApi(APIView):
             return Response(output_serializer.data, status=status.HTTP_201_CREATED)
         return Response(input_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-class EditModelDetailApi(APIView):
-    def get(self, request, edit_model_id):
-        edit_model = EditModel.objects.filter(id=edit_model_id).first()
-        serializer = EditModelDetailSerializer(edit_model)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class EditModelDeleteApi(APIView):
-    permission_classes = (IsAuthenticated, )
-
-    def delete(self, request, *args, **kwargs):
+class EditModelDeleteApi(AuthenticatedAccessMixin, APIView):
+    def delete(self, request):
         serializer = EditModelDeleteInputSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             edit_model_id = serializer.validated_data.get("edit_model_id")
@@ -172,14 +146,14 @@ class EditModelDeleteApi(APIView):
             )
 
 
-class PointListApi(APIView):
+class PointListApi(AuthenticatedAccessMixin, APIView):
     def get(self, request, edit_model_id):
         points = Point.objects.filter(edit_model_id=edit_model_id)
         output_serializer = PointOutputSerializer(points, many=True)
         return Response(output_serializer.data, status=status.HTTP_200_OK)
 
 
-class PointAddApi(APIView):
+class PointAddApi(AuthenticatedAccessMixin, APIView):
     def post(self, request):
         input_serializer = PointInputSerializer(data=request.data)
         if input_serializer.is_valid(raise_exception=True):
@@ -207,8 +181,8 @@ class PointAddApi(APIView):
         return Response(input_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PointDeleteApi(APIView):
-    def delete(self, request, *args, **kwargs):
+class PointDeleteApi(AuthenticatedAccessMixin, APIView):
+    def delete(self, request):
         input_serializer = PointDeleteSerializer(data=request.data)
         if input_serializer.is_valid(raise_exception=True):
             edit_model_id = input_serializer.validated_data.get(
@@ -230,8 +204,8 @@ class PointDeleteApi(APIView):
         return Response(input_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class NoteAddApi(APIView):
-    def post(self, request, *args, **kwargs):
+class NoteAddApi(AuthenticatedAccessMixin, APIView):
+    def post(self, request):
         input_serializer = PointNoteSerializer(data=request.data)
         if input_serializer.is_valid(raise_exception=True):
             edit_model_id = input_serializer.validated_data.get(
@@ -253,8 +227,8 @@ class NoteAddApi(APIView):
         return Response(input_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class NoteDeleteApi(APIView):
-    def delete(self, request, *args, **kwargs):
+class NoteDeleteApi(AuthenticatedAccessMixin, APIView):
+    def delete(self, request):
         input_serializer = NoteDeleteSerializer(data=request.data)
         if input_serializer.is_valid(raise_exception=True):
             edit_model_id = input_serializer.validated_data.get(

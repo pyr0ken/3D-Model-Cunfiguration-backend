@@ -42,14 +42,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Third-party apps
-    "channels",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "drf_yasg",
-    "silk",
     # local apps
-    "apps.websocket",
     "apps.core",
     "apps.users",
     "apps.models",
@@ -90,20 +87,7 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = "config.wsgi.application"
-
-# ------------------------ Chnnels ------------------------
-ASGI_APPLICATION = "config.asgi.application"
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
-        },
-    },
-}
-
+WSGI_APPLICATION = "config.wsgi.application"
 
 # ------------------------ Database ------------------------
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -180,7 +164,6 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
-    #! TODO: CHANGE REFRESH TOKEN LIFETIME
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": False,
@@ -214,57 +197,14 @@ CORS_ALLOWED_ORIGINS = [
     "https://127.0.0.1:3000",
 ]
 
-# ------------------------ Email Config ------------------------
-# EMAIL_BACKEND = "config.services.smtp.EmailBackend"
-# EMAIL_HOST = config("EMAIL_HOST")
-# EMAIL_USE_TLS = config("EMAIL_USE_TLS", cast=bool)
-# EMAIL_PORT = config("EMAIL_PORT", cast=int)
-# EMAIL_HOST_USER = config("EMAIL_HOST_USER")
-# EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
-# DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL")
-
 # ------------------------ Media ------------------------
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-
-# ------------------------ AWS Wasabi Service ------------------------
-# AWS_SERVICE_NAME = config("AWS_SERVICE_NAME")
-# AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
-# AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
-# AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME")
-# AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME")
-# AWS_S3_ENDPOINT_URL = f"https://s3.{AWS_S3_REGION_NAME}.wasabisys.com"
-# AWS_S3_FILE_OVERWRITE = config("AWS_S3_FILE_OVERWRITE")
-# DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 # ------------------------ User Model ------------------------
 AUTH_USER_MODEL = "users.User"
 LOGIN_URL = "/admin/login/"
 LOGOUT_URL = "/admin/logout/"
-
-# ------------------------ Redis Config ------------------------
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": config("REDIS_LOCATION", default="redis://127.0.0.1:6379"),
-    }
-}
-
-# ------------------------ OTP Config ------------------------
-# OTP_EXPIRY_MINS = 1
-
-# ------------------------ Celery Config ------------------------
-# CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
-# CELERY_RESULT_BACKEND = CELERY_BROKER_URL
-# CELERY_ACCEPT_CONTENT = ["application/json"]
-# CELERY_TASK_SERIALIZER = "json"
-# CELERY_RESULT_SERIALIZER = "json"
-# CELERY_TASK_TRACK_STARTED = True
-# CELERY_TASK_ALWAYS_EAGER = True
-# CELERY_TASK_EAGER_PROPAGATES = True
-# CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-# CELERY_TIMEZONE = "UTC"
-
 
 # ------------------------ Video SDK Config ------------------------
 VIDEOSDK_API_KEY = config('VIDEOSDK_API_KEY')

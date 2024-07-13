@@ -72,21 +72,6 @@ class RoomMemberListSerializer(serializers.ModelSerializer):
         )
 
 
-class RoomMembersSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-    room = RoomDetailSerializer()
-
-    class Meta:
-        model = RoomMember
-        fields = (
-            "id",
-            "user",
-            "room",
-            "is_leave",
-            "last_join",
-        )
-
-
 class InputRoomModelSerializer(serializers.Serializer):
     meeting_id = serializers.CharField(required=True)
     model_id = serializers.UUIDField(required=True)
