@@ -1,8 +1,5 @@
 from django.contrib import admin
-from .models import Room, RoomMember, Chat, RoomModel
-
-# Register your models here.
-admin.site.register(Chat)
+from .models import Room, RoomMember, RoomModel
 
 
 @admin.register(Room)

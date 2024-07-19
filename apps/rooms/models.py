@@ -1,22 +1,7 @@
-import random
-import string
 from django.db import models
 from django.conf import settings
 from apps.core.models import BaseModel
-from apps.models.models import EditModel, Model
-
-
-def generate_random_room_id():
-    # Generate a random alphanumeric string of length 11
-    random_string = "".join(random.choices(string.ascii_letters + string.digits, k=9))
-
-    # Insert dashes every three characters
-    formatted_string = "-".join(
-        [random_string[i : i + 3] for i in range(0, len(random_string), 3)]
-    )
-
-    return formatted_string
-
+from apps.models.models import EditModel
 
 class Room(BaseModel):
     title = models.CharField(max_length=255)
@@ -33,14 +18,14 @@ class Room(BaseModel):
         ordering = ("-created_at",)
 
     def __str__(self) -> str:
-        return f"{self.meeting_id} - {self.owner}"
+        return f"{self.title} - {self.meeting_id} - {self.owner}"
 
 
 class RoomMember(BaseModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user_rooms"
     )
-    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="user_rooms")
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="room_users")
     is_leave = models.BooleanField(default=False)
     last_join = models.DateTimeField(null=True, blank=True)
 
@@ -68,18 +53,3 @@ class RoomModel(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.room} - {self.edit_model}"
-
-
-class Chat(BaseModel):
-    room = models.ForeignKey(Room, on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    text = models.TextField()
-
-    class Meta:
-        verbose_name = "Chat"
-        verbose_name_plural = "Chats"
-        db_table = "room_chats"
-        ordering = ("-created_at",)
-
-    def __str__(self) -> str:
-        return f"{self.user} - {self.room} - {self.text}"

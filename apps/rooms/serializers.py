@@ -29,7 +29,7 @@ class RoomEndSerializer(serializers.Serializer):
 
 
 class RoomListSerializer(serializers.ModelSerializer):
-    members_count = serializers.IntegerField()
+    members_count = serializers.SerializerMethodField()
     edit_models_count = serializers.IntegerField()
 
     class Meta:
@@ -43,6 +43,9 @@ class RoomListSerializer(serializers.ModelSerializer):
             "edit_models_count",
             "created_at",
         )
+
+    def get_members_count(self, obj):
+        return RoomMember.objects.filter(room_id=obj.id).count()
 
 
 class RoomDetailSerializer(serializers.ModelSerializer):
@@ -99,9 +102,13 @@ class OutputRoomModelSerializer(serializers.ModelSerializer):
         )
 
 
-class RoomSelectModelSerializer(serializers.Serializer):
+class RoomModelBaseSerializer(serializers.Serializer):
     meeting_id = serializers.CharField(required=True)
     edit_model_id = serializers.UUIDField(required=True)
 
-class RoomModelDeleteSerializer(RoomSelectModelSerializer):
+class RoomSelectModelSerializer(RoomModelBaseSerializer):
+    ...
+
+
+class RoomModelDeleteSerializer(RoomModelBaseSerializer):
     ...

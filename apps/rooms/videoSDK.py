@@ -31,23 +31,4 @@ def create_room(token):
     headers = {"Authorization": token, 'Content-Type': 'application/json'}
     response = requests.post(
         settings.VIDEOSDK_API_ENDPOINT + "/rooms", headers=headers)
-    # response.raise_for_status()
     return response.json()
-
-
-def validate_room(token, room_id):
-    headers = {"Authorization": token, 'Content-Type': 'application/json'}
-    response = requests.get(
-        settings.VIDEOSDK_API_ENDPOINT + f"/sessions/", headers=headers)
-
-    response_dict = response.json()
-    data = response_dict["data"]
-
-    room_status = None
-
-    for room in data:
-        if room['roomId'] == room_id:
-            room_status = room['status']
-            break
-
-    return room_status

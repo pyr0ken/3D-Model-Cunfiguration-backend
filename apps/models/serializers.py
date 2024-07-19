@@ -1,6 +1,7 @@
 from django.core.validators import FileExtensionValidator
 from rest_framework import serializers
-from .models import Model, EditModel, Point
+
+from .models import EditModel, Model, Point
 
 
 class ModelListSerializer(serializers.ModelSerializer):
