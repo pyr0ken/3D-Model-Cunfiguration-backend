@@ -58,6 +58,7 @@ class Point(BaseModel):
     position = models.CharField()
     color = models.CharField()
     radius = models.FloatField()
+    title = models.CharField(null=True, blank=True)
     note = models.TextField(null=True, blank=True)
 
     class Meta:
@@ -67,3 +68,14 @@ class Point(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.position} - {self.color}"
+
+
+class ImageTo3dModel(BaseModel):
+    image = models.ImageField(upload_to="images3d")
+    class Meta:
+        verbose_name = "Image To 3D Model"
+        verbose_name_plural = "Image To 3D Models"
+        db_table = "image3d"
+
+    def __str__(self) -> str:
+        return f"{self.image.name}"

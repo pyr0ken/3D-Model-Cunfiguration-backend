@@ -122,7 +122,8 @@ class PointInputSerializer(serializers.Serializer):
 class PointNoteSerializer(serializers.Serializer):
     edit_model_id = serializers.UUIDField(required=True)
     point_id = serializers.UUIDField(required=True)
-    note = serializers.CharField(required=True)
+    note = serializers.CharField(required=False)
+    title = serializers.CharField(required=False)
 
 
 class PointOutputSerializer(serializers.ModelSerializer):
@@ -134,6 +135,7 @@ class PointOutputSerializer(serializers.ModelSerializer):
             "color",
             "radius",
             "note",
+            "title",
         )
 
 
@@ -145,3 +147,20 @@ class PointDeleteSerializer(serializers.Serializer):
 class NoteDeleteSerializer(serializers.Serializer):
     edit_model_id = serializers.UUIDField(required=True)
     point_id = serializers.UUIDField(required=True)
+
+class NoteAiSerializer(serializers.Serializer):
+    title = serializers.CharField(required=True)
+
+
+class ImageTo3dModelSerializer(serializers.Serializer):
+    title = serializers.CharField(required=True)
+    file = serializers.ImageField(required=True)
+
+
+class PointCloudSerializer(serializers.Serializer):
+    model_name = serializers.CharField(required=True)
+
+class SegmentSerializer(serializers.Serializer):
+    prompt_point = serializers.CharField(required=True)
+    prompt_label = serializers.BooleanField(required=True)
+

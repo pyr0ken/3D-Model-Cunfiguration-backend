@@ -64,6 +64,18 @@ Ensure you have the following installed:
     python manage.py runserver
     ```
 
+6. **Config image to 3d module**
+```
+# Install g++=9.3.0 in conda environment by
+conda install gxx_linux-64=9.3.0
+# Install torkit3d
+git submodule update --init third_party/torkit3d && 
+FORCE_CUDA=1 pip install third_party/torkit3d &&
+# Install apex
+git submodule update --init third_party/apex &&
+pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" third_party/apex
+```
+
 ## Configuration
 
 ### Environment Variables

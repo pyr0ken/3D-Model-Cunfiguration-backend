@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Model, Point, EditModel
+from .models import Model, Point, EditModel, ImageTo3dModel
 
 
 @admin.register(Model)
@@ -84,6 +84,22 @@ class PointAdmin(admin.ModelAdmin):
     search_fields = (
         "position",
         "color",
+        "created_at",
+        "updated_at",
+    )
+    readonly_fields = ("created_at", "updated_at", "id")
+    ordering = ("-created_at",)
+
+    filter_horizontal = []
+
+
+@admin.register(ImageTo3dModel)
+class ImageTo3dModelAdmin(admin.ModelAdmin):
+    list_display = ("id", "image", "created_at")
+    list_filter = ("created_at", "updated_at")
+    list_per_page = 50
+
+    search_fields = (
         "created_at",
         "updated_at",
     )

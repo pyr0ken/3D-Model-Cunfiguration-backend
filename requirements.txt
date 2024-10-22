@@ -8,5 +8,23 @@ Pillow==10.1.0
 psycopg2-binary==2.9.9
 python-decouple==3.8
 
+# Ai
+google-generativeai==0.8.1
+numpy==1.26.4
+omegaconf==2.3.0
+einops==0.7.0
+transformers==4.35.0
+trimesh==4.0.5
+rembg==2.0.59
+huggingface-hub==0.17.3
+imageio==2.35.1
+imageio-ffmpeg==0.5.1
+torch==2.4.1+cu124
+torchaudio==2.4.1+cu124
+git+https://github.com/tatsy/torchmcubes.git@3aef8afa5f21b113afc4f4ea148baee850cbd472
+torchvision==0.19.1+cu124
+git+https://github.com/zyc00/Point-SAM.git
+timm==1.0.9
+
 # Debug
 ipython==8.17.2
